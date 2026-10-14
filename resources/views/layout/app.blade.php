@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
 	<meta charset="UTF-8">
@@ -349,40 +349,64 @@
 			}
 		}
 	</style>
+	<style>
+		body { background: linear-gradient(135deg, #f6f8fb 0%, #eef2f9 100%) fixed; }
+
+		.hd { background: rgba(255,255,255,.92); border-bottom: 1px solid #e6ebf2; position: sticky; top: 0; z-index: 20; backdrop-filter: blur(8px); }
+		.hd-in { max-width: 1210px; margin: 0 auto; padding: 12px 20px; display: flex; align-items: center; gap: 28px; }
+		.hd-brand { display: flex; align-items: center; gap: 10px; }
+		.hd-logo { width: 38px; height: 38px; border-radius: 11px; background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: #fff; display: grid; place-items: center; font-size: 17px; box-shadow: 0 6px 14px rgba(37,99,235,.35); }
+		.hd-brand strong { display: block; font-size: 15px; line-height: 1.1; }
+		.hd-brand small { font-size: 11px; color: var(--muted); }
+		.hd-nav { display: flex; gap: 4px; flex: 1; }
+		.hd-nav a { display: inline-flex; align-items: center; gap: 7px; padding: 9px 14px; border-radius: 10px; font-size: 13px; font-weight: 600; color: #3b4f6b; white-space: nowrap; }
+		.hd-nav a:hover { background: #f0f4fa; }
+		.hd-nav a.act { background: #e3edff; color: #2563eb; }
+		.hd-act { display: flex; align-items: center; gap: 10px; }
+		.ic-btn { position: relative; width: 38px; height: 38px; border-radius: 11px; border: 1px solid #e1e7f0; background: #fff; display: grid; place-items: center; color: #3b4f6b; font-size: 14px; }
+		.ic-btn:hover { background: #f4f7fb; }
+		.ic-btn .dot { position: absolute; top: 8px; right: 9px; width: 7px; height: 7px; border-radius: 50%; background: #ef3a4a; }
+		.btn-nv { display: inline-flex; align-items: center; gap: 8px; padding: 11px 18px; border-radius: 11px; background: #2563eb; color: #fff; font-size: 13px; font-weight: 700; box-shadow: 0 8px 18px rgba(37,99,235,.35); white-space: nowrap; }
+		.btn-nv:hover { background: #1d4ed8; }
+		@media (max-width: 900px) { .hd-in { flex-wrap: wrap; gap: 12px; } .hd-nav { order: 3; flex-basis: 100%; overflow-x: auto; } }
+	</style>
 </head>
 <body>
-	@hasSection('encabezado')
-		@yield('encabezado')
-	@else
-	<header class="topbar">
-		<div class="topbar-inner">
-			<div class="brand">
-				<h1>BIG-DACO</h1>
-				<p>Plataforma de gestión de inventario y análisis de datos para supermercados</p>
+	@php
+		$hayCriticos = \App\Models\Producto::where('stock', '<', 30)->exists();
+		$enlaces = [
+			['dashboard*', '/dashboard', 'fa-house', 'Inicio'],
+			['productos*', '/productos', 'fa-cube', 'Productos'],
+			['proveedores*', '/proveedores', 'fa-truck', 'Proveedores'],
+			['ventas*', '/ventas', 'fa-cart-shopping', 'Ventas'],
+			['inventario*', '/inventario', 'fa-warehouse', 'Inventario'],
+			['reportes*', '/reportes/ventas', 'fa-chart-column', 'Reportes'],
+		];
+	@endphp
+
+	<header class="hd">
+		<div class="hd-in">
+			<div class="hd-brand">
+				<div class="hd-logo"><i class="fa-solid fa-warehouse"></i></div>
+				<div><strong>BIG-DACO</strong><small>Gestión inteligente</small></div>
 			</div>
 
-			<div class="top-actions">
-				<a class="top-btn" href="{{ url('/proveedores') }}">
-					<i class="fa-solid fa-users"></i>
-					Proveedores
+			<nav class="hd-nav" aria-label="Navegación principal">
+				@foreach ($enlaces as [$patron, $ruta, $icono, $texto])
+					<a class="{{ request()->is($patron) ? 'act' : '' }}" href="{{ url($ruta) }}"><i class="fa-solid {{ $icono }}"></i> {{ $texto }}</a>
+				@endforeach
+			</nav>
+
+			<div class="hd-act">
+				<a class="ic-btn" href="{{ url('/productos') }}" title="Buscar productos"><i class="fa-solid fa-magnifying-glass"></i></a>
+				<a class="ic-btn" href="{{ url('/inventario?estado=critico') }}" title="Alertas de stock">
+					<i class="fa-regular fa-bell"></i>
+					@if ($hayCriticos)<span class="dot"></span>@endif
 				</a>
-				<a class="top-btn" href="{{ url('/ventas/create') }}">
-					<i class="fa-solid fa-cart-shopping"></i>
-					Nueva venta
-				</a>
+				<a class="btn-nv" href="{{ url('/ventas/create') }}"><i class="fa-solid fa-cart-shopping"></i> Nueva venta</a>
 			</div>
 		</div>
-
-		<nav class="main-nav" aria-label="Navegación principal">
-			<a href="{{ url('/dashboard') }}"><i class="fa-solid fa-house"></i> Inicio</a>
-			<a href="{{ url('/productos') }}"><i class="fa-solid fa-box"></i> Productos</a>
-			<a href="{{ url('/proveedores') }}"><i class="fa-solid fa-truck"></i> Proveedores</a>
-			<a href="{{ url('/ventas') }}"><i class="fa-solid fa-cart-shopping"></i> Ventas</a>
-			<a href="{{ url('/inventario') }}"><i class="fa-solid fa-warehouse"></i> Inventario</a>
-			<a href="{{ url('/reportes/ventas') }}"><i class="fa-solid fa-chart-column"></i> Reportes</a>
-		</nav>
 	</header>
-	@endif
 
 	@hasSection('sin_contenedor')
 		@yield('contenido')
