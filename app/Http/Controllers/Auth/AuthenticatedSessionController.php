@@ -3,10 +3,10 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Auth\LoginRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class AuthenticatedSessionController extends Controller
@@ -22,11 +22,29 @@ class AuthenticatedSessionController extends Controller
     /**
      * Handle an incoming authentication request.
      */
-    public function store(LoginRequest $request): RedirectResponse
+    public function store(Request $request): RedirectResponse
     {
-        $request->authenticate();
+        $request->validate(['id_token' => ['required', 'string']]);
+
+        $response = Http::asJson()->post(
+            'https://identitytoolkit.googleapis.com/v1/accounts:lookup?key='.config('services.firebase.api_key'),
+            ['idToken' => $request->input('id_token')]
+        );
+
+        $account = $response->json('users.0');
+
+        if (! $response->successful() || ! $account || ! empty($account['disabled'])) {
+            throw ValidationException::withMessages([
+                'id_token' => 'No se pudo verificar la sesion con Firebase.',
+            ]);
+        }
 
         $request->session()->regenerate();
+        $request->session()->put('firebase_user', [
+            'id' => $account['localId'],
+            'name' => $account['displayName'] ?? $account['email'] ?? 'Usuario',
+            'email' => $account['email'] ?? '',
+        ]);
 
         return redirect()->intended(route('dashboard', absolute: false));
     }
@@ -36,8 +54,6 @@ class AuthenticatedSessionController extends Controller
      */
     public function destroy(Request $request): RedirectResponse
     {
-        Auth::guard('web')->logout();
-
         $request->session()->invalidate();
 
         $request->session()->regenerateToken();

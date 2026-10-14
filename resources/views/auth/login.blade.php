@@ -7,8 +7,11 @@
 
     <x-auth-session-status class="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-700" :status="session('status')" />
 
-    <form method="POST" action="{{ route('login') }}" class="space-y-5">
+    <form id="firebase-login-form" method="POST" action="{{ route('login') }}" class="space-y-5">
         @csrf
+        <input type="hidden" name="id_token">
+        <p id="firebase-login-error" class="text-sm text-red-600"></p>
+        <x-input-error :messages="$errors->get('id_token')" class="text-red-600" />
 
         <div>
             <x-input-label for="email" :value="__('Correo electronico')" class="text-slate-700" />
@@ -38,24 +41,6 @@
             />
 
             <x-input-error :messages="$errors->get('password')" class="mt-2 text-red-600" />
-        </div>
-
-        <div class="flex items-center justify-between gap-3">
-            <label for="remember_me" class="inline-flex items-center text-sm text-slate-600">
-                <input
-                    id="remember_me"
-                    type="checkbox"
-                    class="h-4 w-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500"
-                    name="remember"
-                >
-                <span class="ms-2">{{ __('Recordarme') }}</span>
-            </label>
-
-            @if (Route::has('password.request'))
-                <a class="text-sm font-semibold text-slate-500 transition hover:text-sky-600 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 rounded" href="{{ route('password.request') }}">
-                    {{ __('Olvidaste tu contrasena?') }}
-                </a>
-            @endif
         </div>
 
         <div>
