@@ -39,6 +39,7 @@ class ChatbotService
      */
     public function ask(string $message, array $history = []): string
     {
+        $databaseQuestion = $this->requiresDatabaseLookup($message);
         $contents = [];
         foreach (array_slice($history, -10) as $turn) {
             $contents[] = [
@@ -49,15 +50,23 @@ class ChatbotService
         $contents[] = ['role' => 'user', 'parts' => [['text' => $message]]];
 
         for ($i = 0; $i < self::MAX_STEPS; $i++) {
+            $payload = [
+                'systemInstruction' => ['parts' => [['text' => self::SYSTEM]]],
+                'contents' => $contents,
+                'tools' => [['functionDeclarations' => $this->declarations()]],
+            ];
+
+            if ($databaseQuestion && $i === 0) {
+                $payload['toolConfig'] = [
+                    'functionCallingConfig' => ['mode' => 'ANY'],
+                ];
+            }
+
             $response = Http::withHeaders(['x-goog-api-key' => config('services.gemini.key')])
                 ->timeout(60)
                 ->retry(3, 1500, fn ($e) => in_array($e->getCode(), [429, 500, 503]), throw: false)
                 ->post('https://generativelanguage.googleapis.com/v1beta/models/'
-                    .config('services.gemini.model').':generateContent', [
-                        'systemInstruction' => ['parts' => [['text' => self::SYSTEM]]],
-                        'contents' => $contents,
-                        'tools' => [['functionDeclarations' => $this->declarations()]],
-                    ]);
+                    .config('services.gemini.model').':generateContent', $payload);
 
             if (! $response->successful()) {
                 report(new \RuntimeException('Gemini error: '.$response->body()));
@@ -97,6 +106,19 @@ class ChatbotService
         }
 
         return 'Consulta demasiado compleja; sé más concreto. / Query too complex; please be more specific.';
+    }
+
+    private function requiresDatabaseLookup(string $message): bool
+    {
+        $hasDatabaseTopic = (bool) preg_match(
+            '/\b(product\w*|producto\w*|catalog\w*|cat[aá]log\w*|categor\w*|price\w*|precio\w*|stock|'
+            .'inventory|inventar\w*|existenc\w*|sale\w*|venta\w*|sold|vendid\w*|revenue|'
+            .'income|ingreso\w*|supplier\w*|proveedor\w*|best.?sell\w*|m[aá]s vendido\w*)\b/iu',
+            $message
+        );
+
+        return $hasDatabaseTopic
+            && ! preg_match('/\b(transhuman\w*|declaraci[oó]n persona|declaration)\b/iu', $message);
     }
 
     private function run(string $name, array $args): array
