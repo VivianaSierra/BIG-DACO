@@ -351,6 +351,9 @@
 	</style>
 </head>
 <body>
+	@hasSection('encabezado')
+		@yield('encabezado')
+	@else
 	<header class="topbar">
 		<div class="topbar-inner">
 			<div class="brand">
@@ -379,7 +382,11 @@
 			<a href="{{ url('/reportes/ventas') }}"><i class="fa-solid fa-chart-column"></i> Reportes</a>
 		</nav>
 	</header>
+	@endif
 
+	@hasSection('sin_contenedor')
+		@yield('contenido')
+	@else
 	<main class="page">
 		@if(session('mensaje'))
 			<div class="app-alert">{{ session('mensaje') }}</div>
@@ -387,6 +394,7 @@
 
 		@yield('contenido')
 	</main>
+	@endif
 
 	@auth
 		<x-chatbot />
