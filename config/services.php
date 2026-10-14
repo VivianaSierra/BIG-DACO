@@ -32,6 +32,11 @@ return [
         'api_key' => env('FIREBASE_API_KEY', 'AIzaSyDicZxPiD4ucomnYFw5KfGwjNUxa36kbUQ'),
     ],
 
+    'gemini' => [
+        'key' => env('GEMINI_API_KEY'),
+        'model' => env('GEMINI_MODEL', 'gemini-3.5-flash-lite'),
+    ],
+
     'slack' => [
         'notifications' => [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),

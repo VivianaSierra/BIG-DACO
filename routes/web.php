@@ -15,6 +15,10 @@ Route::get('/dashboard', function () {
 
 Route::middleware(['auth'])->group(function () {
 
+    Route::post('/chatbot', \App\Http\Controllers\ChatbotController::class)
+        ->middleware('throttle:20,1')
+        ->name('chatbot');
+
     Route::resource('productos', ProductoController::class)->except(['show']);
 
   
