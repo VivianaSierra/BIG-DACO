@@ -14,8 +14,19 @@ class ChatbotService
     private const SYSTEM = 'You are the assistant for BIG DACO, an inventory and sales system. '
         .'LANGUAGE RULE: detect the language of the user\'s latest message and reply strictly in that language. '
         .'If it is English, reply in English; if it is Spanish, reply in Spanish. Never mix languages. '
+        .'If the user explicitly asks for both languages, give the answer in Spanish followed by its English version. '
         .'Be brief and clear. ALWAYS use the available functions to get real data from the database; never invent figures. '
-        .'You only have read access.';
+        .'You only have read access. '
+        .'You also know the "Declaración Persona Transhumana" reproduced below. If asked about it (its points, meaning, author, date), '
+        .'answer from this text, translating faithfully into the user\'s language when needed, and do not add content that is not in it.';
+
+    private function system(): string
+    {
+        $path = resource_path('chatbot/declaracion-persona-transhumana.txt');
+        $doc = is_file($path) ? file_get_contents($path) : '';
+
+        return self::SYSTEM."\n\n--- DOCUMENT ---\n".$doc;
+    }
 
     /**
      * @param  list<array{role:string,text:string}>  $history
@@ -37,7 +48,7 @@ class ChatbotService
                 ->retry(3, 1500, fn ($e) => in_array($e->getCode(), [429, 500, 503]), throw: false)
                 ->post('https://generativelanguage.googleapis.com/v1beta/models/'
                     .config('services.gemini.model').':generateContent', [
-                        'systemInstruction' => ['parts' => [['text' => self::SYSTEM]]],
+                        'systemInstruction' => ['parts' => [['text' => $this->system()]]],
                         'contents' => $contents,
                         'tools' => [['functionDeclarations' => $this->declarations()]],
                     ]);
