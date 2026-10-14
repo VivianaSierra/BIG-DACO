@@ -17,10 +17,10 @@
 
 <div id="bd-chat" aria-live="polite">
     <header>Asistente BIG DACO</header>
-    <div id="bd-chat-msgs"><div>Hola, pregunta por productos, stock, inventario o ventas.</div></div>
+    <div id="bd-chat-msgs"><div>Hola, pregunta por productos, stock, inventario o ventas.&#10;Hi! Ask me about products, stock, inventory or sales.</div></div>
     <form id="bd-chat-form">
-        <input id="bd-chat-input" type="text" maxlength="1000" placeholder="Escribe tu pregunta" autocomplete="off">
-        <button type="submit">Enviar</button>
+            <input id="bd-chat-input" type="text" maxlength="1000" placeholder="Escribe tu pregunta / Type your question" autocomplete="off">
+            <button type="submit">Enviar / Send</button>
     </form>
 </div>
 <button id="bd-chat-btn" type="button" aria-label="Abrir asistente">💬</button>
@@ -58,7 +58,7 @@
             btn.disabled = true;
             const sent = history.slice(-10);
             add('user', text);
-            const wait = add('model', 'Escribiendo...');
+            const wait = add('model', 'Escribiendo... / Typing...');
             let reply;
             try {
                 const res = await fetch(url, {
@@ -68,7 +68,7 @@
                 });
                 reply = (await res.json()).reply ?? 'Error al procesar la consulta.';
             } catch (err) {
-                reply = 'Error de conexion.';
+                reply = 'Error de conexión / Connection error.';
             }
             wait.textContent = reply;
             history.push({role: 'user', text}, {role: 'model', text: reply});

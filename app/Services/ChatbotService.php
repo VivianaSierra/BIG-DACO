@@ -11,9 +11,11 @@ class ChatbotService
 {
     private const MAX_STEPS = 5;
 
-    private const SYSTEM = 'Eres el asistente de BIG DACO, un sistema de inventario y ventas. '
-        .'Responde en espanol, de forma breve y clara. Usa SIEMPRE las funciones disponibles para '
-        .'obtener datos reales de la base de datos; nunca inventes cifras. Solo tienes acceso de lectura.';
+    private const SYSTEM = 'You are the assistant for BIG DACO, an inventory and sales system. '
+        .'LANGUAGE RULE: detect the language of the user\'s latest message and reply strictly in that language. '
+        .'If it is English, reply in English; if it is Spanish, reply in Spanish. Never mix languages. '
+        .'Be brief and clear. ALWAYS use the available functions to get real data from the database; never invent figures. '
+        .'You only have read access.';
 
     /**
      * @param  list<array{role:string,text:string}>  $history
@@ -43,7 +45,7 @@ class ChatbotService
             if (! $response->successful()) {
                 report(new \RuntimeException('Gemini error: '.$response->body()));
 
-                return 'No pude contactar al asistente en este momento. Intenta de nuevo.';
+                return 'No pude contactar al asistente. Intenta de nuevo. / Could not reach the assistant. Please try again.';
             }
 
             $content = $response->json('candidates.0.content');
@@ -53,7 +55,7 @@ class ChatbotService
             if (! $calls) {
                 $text = trim(implode("\n", array_column($parts, 'text')));
 
-                return $text !== '' ? $text : 'No tengo una respuesta para eso.';
+                return $text !== '' ? $text : 'No tengo una respuesta. / I have no answer for that.';
             }
 
             $parts = array_map(function ($p) {
@@ -77,7 +79,7 @@ class ChatbotService
             $contents[] = ['role' => 'user', 'parts' => $results];
         }
 
-        return 'La consulta fue demasiado compleja. Intenta con una pregunta mas concreta.';
+        return 'Consulta demasiado compleja; sé más concreto. / Query too complex; please be more specific.';
     }
 
     private function run(string $name, array $args): array
