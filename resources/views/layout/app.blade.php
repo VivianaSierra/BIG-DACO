@@ -387,5 +387,9 @@
 
 		@yield('contenido')
 	</main>
+
+	@auth
+		<x-chatbot />
+	@endauth
 </body>
 </html>

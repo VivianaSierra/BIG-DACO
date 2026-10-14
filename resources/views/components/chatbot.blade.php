@@ -1,62 +1,79 @@
-<div x-data="chatbot('{{ route('chatbot') }}')" class="fixed bottom-5 right-5 z-50">
-    <div x-show="open" x-cloak class="mb-3 flex h-[28rem] w-80 flex-col overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-slate-200 sm:w-96">
-        <div class="bg-gradient-to-r from-sky-600 to-blue-700 px-4 py-3 text-sm font-bold text-white">Asistente BIG DACO</div>
+<meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <div class="flex-1 space-y-3 overflow-y-auto p-3 text-sm" x-ref="box">
-            <p class="rounded-xl bg-slate-100 p-2 text-slate-600">Hola, pregunta por productos, stock, inventario o ventas.</p>
-            <template x-for="(m, i) in messages" :key="i">
-                <div :class="m.role === 'user' ? 'text-right' : ''">
-                    <span class="inline-block max-w-[85%] whitespace-pre-wrap rounded-xl px-3 py-2"
-                          :class="m.role === 'user' ? 'bg-sky-600 text-white' : 'bg-slate-100 text-slate-800'"
-                          x-text="m.text"></span>
-                </div>
-            </template>
-            <p x-show="loading" class="text-slate-400">Escribiendo...</p>
-        </div>
+<style>
+    #bd-chat-btn{position:fixed;bottom:20px;right:20px;z-index:9999;width:56px;height:56px;border-radius:9999px;border:0;background:#0284c7;color:#fff;font-size:26px;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.3)}
+    #bd-chat-btn:hover{background:#0369a1}
+    #bd-chat{position:fixed;bottom:88px;right:20px;z-index:9999;width:360px;max-width:calc(100vw - 40px);height:28rem;max-height:calc(100vh - 110px);display:none;flex-direction:column;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,.3);font:14px system-ui,sans-serif}
+    #bd-chat.open{display:flex}
+    #bd-chat header{background:linear-gradient(90deg,#0284c7,#1d4ed8);color:#fff;padding:12px 16px;font-weight:700}
+    #bd-chat-msgs{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px}
+    #bd-chat-msgs div{max-width:85%;padding:8px 12px;border-radius:12px;white-space:pre-wrap;background:#f1f5f9;color:#1e293b;align-self:flex-start}
+    #bd-chat-msgs div.user{background:#0284c7;color:#fff;align-self:flex-end}
+    #bd-chat form{display:flex;gap:8px;padding:8px;border-top:1px solid #e2e8f0}
+    #bd-chat input{flex:1;padding:8px 10px;border:1px solid #cbd5e1;border-radius:8px;font:inherit}
+    #bd-chat form button{padding:0 14px;border:0;border-radius:8px;background:#0284c7;color:#fff;font-weight:600;cursor:pointer}
+    #bd-chat form button:disabled{opacity:.5}
+</style>
 
-        <form @submit.prevent="send" class="flex gap-2 border-t border-slate-200 p-2">
-            <input x-model="input" type="text" maxlength="1000" placeholder="Escribe tu pregunta"
-                   class="flex-1 rounded-lg border-slate-300 text-sm focus:border-sky-500 focus:ring-sky-500">
-            <button :disabled="loading" class="rounded-lg bg-sky-600 px-3 text-sm font-semibold text-white disabled:opacity-50">Enviar</button>
-        </form>
-    </div>
-
-    <button @click="open = !open" class="ml-auto flex h-14 w-14 items-center justify-center rounded-full bg-sky-600 text-2xl text-white shadow-lg hover:bg-sky-700">
-        <span x-text="open ? '×' : '💬'"></span>
-    </button>
+<div id="bd-chat" aria-live="polite">
+    <header>Asistente BIG DACO</header>
+    <div id="bd-chat-msgs"><div>Hola, pregunta por productos, stock, inventario o ventas.</div></div>
+    <form id="bd-chat-form">
+        <input id="bd-chat-input" type="text" maxlength="1000" placeholder="Escribe tu pregunta" autocomplete="off">
+        <button type="submit">Enviar</button>
+    </form>
 </div>
+<button id="bd-chat-btn" type="button" aria-label="Abrir asistente">💬</button>
 
 <script>
-    document.addEventListener('alpine:init', () => {
-        Alpine.data('chatbot', (url) => ({
-            open: false, input: '', loading: false, messages: [],
-            async send() {
-                const text = this.input.trim();
-                if (!text || this.loading) return;
-                const history = this.messages.slice(-10);
-                this.messages.push({ role: 'user', text });
-                this.input = '';
-                this.loading = true;
-                this.scroll();
-                try {
-                    const res = await fetch(url, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json',
-                            'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
-                        },
-                        body: JSON.stringify({ message: text, history }),
-                    });
-                    const data = await res.json();
-                    this.messages.push({ role: 'model', text: data.reply ?? 'Error al procesar la consulta.' });
-                } catch (e) {
-                    this.messages.push({ role: 'model', text: 'Error de conexion.' });
-                }
-                this.loading = false;
-                this.scroll();
-            },
-            scroll() { this.$nextTick(() => this.$refs.box.scrollTop = this.$refs.box.scrollHeight); },
-        }));
-    });
+    (function () {
+        const url = @json(route('chatbot'));
+        const token = document.querySelector('meta[name=csrf-token]').content;
+        const panel = document.getElementById('bd-chat');
+        const msgs = document.getElementById('bd-chat-msgs');
+        const form = document.getElementById('bd-chat-form');
+        const input = document.getElementById('bd-chat-input');
+        const btn = form.querySelector('button');
+        const history = [];
+
+        document.getElementById('bd-chat-btn').addEventListener('click', () => {
+            panel.classList.toggle('open');
+            if (panel.classList.contains('open')) input.focus();
+        });
+
+        function add(role, text) {
+            const el = document.createElement('div');
+            el.className = role === 'user' ? 'user' : '';
+            el.textContent = text;
+            msgs.appendChild(el);
+            msgs.scrollTop = msgs.scrollHeight;
+            return el;
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const text = input.value.trim();
+            if (!text || btn.disabled) return;
+            input.value = '';
+            btn.disabled = true;
+            const sent = history.slice(-10);
+            add('user', text);
+            const wait = add('model', 'Escribiendo...');
+            let reply;
+            try {
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': token},
+                    body: JSON.stringify({message: text, history: sent}),
+                });
+                reply = (await res.json()).reply ?? 'Error al procesar la consulta.';
+            } catch (err) {
+                reply = 'Error de conexion.';
+            }
+            wait.textContent = reply;
+            history.push({role: 'user', text}, {role: 'model', text: reply});
+            btn.disabled = false;
+            msgs.scrollTop = msgs.scrollHeight;
+        });
+    })();
 </script>
