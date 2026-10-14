@@ -9,9 +9,8 @@ Route::get('/', function () {
     return redirect('/login');
 });
 
-Route::get('/dashboard', function () {
-    return view('inicio');
-})->middleware(['auth'])->name('dashboard');
+Route::get('/dashboard', \App\Http\Controllers\DashboardController::class)
+    ->middleware(['auth'])->name('dashboard');
 
 Route::middleware(['auth'])->group(function () {
 

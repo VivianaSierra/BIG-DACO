@@ -160,8 +160,8 @@
 		<article class="kpi-card">
 			<div>
 				<p class="kpi-title">Total productos</p>
-				<p class="kpi-value">120</p>
-				<p class="kpi-meta ok"><i class="fa-solid fa-arrow-trend-up"></i> +12%</p>
+				<p class="kpi-value">{{ number_format($totalProductos) }}</p>
+				<p class="kpi-meta ok"><i class="fa-solid fa-arrow-trend-up"></i> +{{ $productosNuevosMes }} este mes</p>
 			</div>
 			<div class="kpi-icon blue"><i class="fa-solid fa-cube"></i></div>
 		</article>
@@ -169,8 +169,15 @@
 		<article class="kpi-card">
 			<div>
 				<p class="kpi-title">Ventas hoy</p>
-				<p class="kpi-value">$350,000</p>
-				<p class="kpi-meta ok"><i class="fa-solid fa-arrow-trend-up"></i> +8.2%</p>
+				<p class="kpi-value">${{ number_format($ventasHoy, 0, '.', ',') }}</p>
+				@if ($variacionVentas === null)
+					<p class="kpi-meta">Sin ventas ayer para comparar</p>
+				@else
+					<p class="kpi-meta {{ $variacionVentas >= 0 ? 'ok' : 'warn' }}">
+						<i class="fa-solid fa-arrow-trend-{{ $variacionVentas >= 0 ? 'up' : 'down' }}"></i>
+						{{ $variacionVentas >= 0 ? '+' : '' }}{{ $variacionVentas }}% vs ayer
+					</p>
+				@endif
 			</div>
 			<div class="kpi-icon green"><i class="fa-solid fa-dollar-sign"></i></div>
 		</article>
@@ -178,8 +185,12 @@
 		<article class="kpi-card">
 			<div>
 				<p class="kpi-title">Stock crítico</p>
-				<p class="kpi-value">5</p>
-				<p class="kpi-meta warn">Requiere atención</p>
+				<p class="kpi-value">{{ $stockCritico }}</p>
+				@if ($stockCritico > 0)
+					<a class="kpi-meta warn" href="{{ url('/inventario?estado=critico') }}">Requiere atención</a>
+				@else
+					<p class="kpi-meta ok">Todo en orden</p>
+				@endif
 			</div>
 			<div class="kpi-icon red"><i class="fa-solid fa-triangle-exclamation"></i></div>
 		</article>
