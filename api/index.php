@@ -58,6 +58,16 @@ if (isset($_GET['diag'])) {
     try {
         $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
         echo "BOOTSTRAP OK\n";
+        if ($_GET['diag'] === 'req') {
+            $kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
+            $response = $kernel->handle(Illuminate\Http\Request::create($_GET['path'] ?? '/login'));
+            echo 'STATUS: '.$response->getStatusCode()."\n";
+            $ex = $response->exception ?? null;
+            if ($ex) {
+                echo 'EXC: '.get_class($ex).': '.substr($ex->getMessage(), 0, 500).' in '.$ex->getFile().':'.$ex->getLine()."\n";
+            }
+            exit;
+        }
         try {
             $app->make('db')->connection()->getPdo();
             echo "DB OK\n";
