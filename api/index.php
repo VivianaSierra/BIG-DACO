@@ -58,6 +58,11 @@ if (isset($_GET['diag'])) {
     try {
         $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
         echo "BOOTSTRAP OK\n";
+        if ($_GET['diag'] === 'migrate') {
+            $code = Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
+            echo "EXIT: $code\n".Illuminate\Support\Facades\Artisan::output();
+            exit;
+        }
         if ($_GET['diag'] === 'req') {
             $kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
             $response = $kernel->handle(Illuminate\Http\Request::create($_GET['path'] ?? '/login'));
