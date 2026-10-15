@@ -58,6 +58,12 @@ if (isset($_GET['diag'])) {
     try {
         $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
         echo "BOOTSTRAP OK\n";
+        try {
+            $app->make('db')->connection()->getPdo();
+            echo "DB OK\n";
+        } catch (Throwable $e) {
+            echo 'DB: '.get_class($e).': '.substr($e->getMessage(), 0, 300)."\n";
+        }
     } catch (Throwable $e) {
         echo 'ROOT: '.get_class($e).': '.$e->getMessage().' in '.$e->getFile().':'.$e->getLine()."\n";
     }
