@@ -1,59 +1,72 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# BIG-DACO
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Aplicacion de gestion de inventario y ventas construida con Laravel 12, Vite y Firebase Authentication.
 
-## About Laravel
+## Despliegue en Vercel
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+El proyecto incluye el runtime PHP de Vercel, un punto de entrada serverless para Laravel, el build de Vite y rutas para servir los recursos estaticos. Los datos de la aplicacion deben guardarse en una base persistente; el SQLite local no sirve para produccion serverless.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+### 1. Crear la base de datos Neon
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+En Neon, crea una base PostgreSQL y copia la cadena de conexion pooled. Conserva `sslmode=require` en la URL.
 
-## Learning Laravel
+### 2. Importar el repositorio en Vercel
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+Importa este repositorio desde Vercel y deja la configuracion de build detectada por `vercel.json`. El build ejecuta `npm run build`; no ejecutes migraciones durante el build.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### 3. Configurar las variables de entorno
 
-## Laravel Sponsors
+Agrega estas variables en **Project Settings > Environment Variables** para Production y, si aplica, Preview:
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+| Variable | Valor |
+| --- | --- |
+| `APP_NAME` | `BIG-DACO` |
+| `APP_ENV` | `production` |
+| `APP_KEY` | Clave generada con `php artisan key:generate --show` |
+| `APP_DEBUG` | `false` |
+| `APP_URL` | URL HTTPS asignada a tu proyecto Vercel |
+| `ASSET_URL` | La misma URL HTTPS del proyecto Vercel |
+| `DB_CONNECTION` | `pgsql` |
+| `DB_URL` | Cadena pooled de Neon con `sslmode=require` |
+| `SESSION_DRIVER` | `cookie` |
+| `CACHE_STORE` | `array` |
+| `QUEUE_CONNECTION` | `sync` |
+| `LOG_CHANNEL` | `stderr` |
 
-### Premium Partners
+`GEMINI_API_KEY` es opcional; agregala si quieres habilitar el chatbot. No guardes claves ni URLs con credenciales en el repositorio.
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+### 4. Aplicar las migraciones
 
-## Contributing
+Una vez creada la base de Neon y configuradas las variables, ejecuta las migraciones **una sola vez** contra esa base:
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+```sh
+php artisan migrate --force
+```
 
-## Code of Conduct
+Puedes hacerlo desde tu equipo con las variables de Neon configuradas localmente, o desde un entorno seguro con acceso a ellas. No uses `migrate:fresh` sobre una base con datos.
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### 5. Desplegar
 
-## Security Vulnerabilities
+Haz push de los cambios e inicia el despliegue desde Vercel. Las funciones escriben archivos temporales bajo `/tmp`; por eso las sesiones usan cookies y el cache en memoria, mientras PostgreSQL conserva los datos entre invocaciones.
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## Desarrollo local
 
-## License
+Requisitos: PHP 8.2+, Composer y Node.js.
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+```sh
+composer install
+copy .env.example .env
+php artisan key:generate
+php artisan migrate
+npm install
+npm run build
+php artisan serve
+```
+
+Para desarrollar el frontend en vivo, ejecuta `npm run dev` en otra terminal.
+
+## Pruebas
+
+```sh
+php artisan test
+```
