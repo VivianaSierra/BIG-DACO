@@ -57,7 +57,7 @@ class ChatbotService
 
         for ($i = 0; $i < self::MAX_STEPS; $i++) {
             $payload = [
-                'systemInstruction' => ['parts' => [['text' => self::SYSTEM]]],
+                'systemInstruction' => ['parts' => [['text' => self::SYSTEM.' Today is '.now()->toDateString().' (use this date for "hoy"/"today" and relative dates).']]],
                 'contents' => $contents,
                 'tools' => [['functionDeclarations' => $this->declarations()]],
             ];
