@@ -21,8 +21,9 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('productos', ProductoController::class)->except(['show']);
 
   
-    Route::view('/proveedores','proveedores.index');
-    Route::view('/proveedores/create','proveedores.create');
+    Route::resource('proveedores', \App\Http\Controllers\ProveedorController::class)
+        ->parameters(['proveedores' => 'proveedor'])
+        ->except(['show']);
 
   
     Route::resource('ventas', VentaController::class)->except(['show', 'edit', 'update']);
@@ -32,7 +33,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/inventario', [InventarioController::class, 'index'])->name('inventario.index');
 
  
-    Route::view('/reportes/ventas','reportes.ventas');
+    Route::get('/reportes/ventas', [\App\Http\Controllers\ReporteController::class, 'ventas'])->name('reportes.ventas');
 
 });
 

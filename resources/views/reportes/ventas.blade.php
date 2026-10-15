@@ -10,11 +10,13 @@
 </a>
 
 <h2 class="page-title">Reporte de Ventas</h2>
-<p class="page-subtitle">Visualiza indicadores clave y el comportamiento de ventas semanales.</p>
+<p class="page-subtitle">Visualiza indicadores clave y el comportamiento de ventas de los últimos 7 días.</p>
 
 <div class="app-card" style="padding: 18px; margin-bottom: 16px;">
-	<p>Total de ventas del día: <strong>$250.000</strong></p>
-	<p style="margin-bottom: 0;">Producto más vendido: <strong>Arroz</strong></p>
+	<p>Total de ventas del día: <strong>${{ number_format($ventasHoy, 0, ',', '.') }}</strong></p>
+	<p style="margin-bottom: 0;">Producto más vendido:
+		<strong>{{ $productoTop ? $productoTop->nombre.' ('.(int) $productoTop->unidades.' uds.)' : 'Sin ventas registradas' }}</strong>
+	</p>
 </div>
 
 <div class="app-card" style="padding: 18px;">
@@ -24,22 +26,18 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
-
-const ctx = document.getElementById('ventasChart');
-
-new Chart(ctx, {
-type: 'bar',
-data: {
-labels: ['Lunes','Martes','Miércoles','Jueves','Viernes'],
-datasets: [{
-label: 'Ventas',
-data: [120000,190000,300000,250000,400000],
-backgroundColor: '#2f81f7',
-borderRadius: 8
-}]
-}
+new Chart(document.getElementById('ventasChart'), {
+	type: 'bar',
+	data: {
+		labels: @json($etiquetas),
+		datasets: [{
+			label: 'Ventas',
+			data: @json($valores),
+			backgroundColor: '#2f81f7',
+			borderRadius: 8
+		}]
+	}
 });
-
 </script>
 
 @endsection
