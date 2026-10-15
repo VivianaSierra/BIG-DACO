@@ -39,6 +39,12 @@ class ChatbotService
      */
     public function ask(string $message, array $history = []): string
     {
+        if (blank(config('services.gemini.key'))) {
+            report(new \RuntimeException('GEMINI_API_KEY no esta configurada en el entorno.'));
+
+            return 'El asistente no esta configurado (falta GEMINI_API_KEY). / The assistant is not configured (missing GEMINI_API_KEY).';
+        }
+
         $databaseQuestion = $this->requiresDatabaseLookup($message);
         $contents = [];
         foreach (array_slice($history, -10) as $turn) {
