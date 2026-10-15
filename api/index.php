@@ -40,6 +40,24 @@ register_shutdown_function(static function () use ($report): void {
     }
 });
 
+if (isset($_GET['diag'])) {
+    header('Content-Type: text/plain; charset=UTF-8');
+    foreach (['APP_KEY', 'APP_ENV', 'DB_CONNECTION', 'DB_HOST', 'DB_USERNAME', 'DB_PASSWORD', 'DB_DATABASE', 'SESSION_DRIVER'] as $name) {
+        echo $name.': '.(getenv($name) === false || getenv($name) === '' ? 'MISSING' : 'set')."\n";
+    }
+    echo 'APP_KEY length: '.strlen((string) getenv('APP_KEY'))."\n";
+    echo 'PHP: '.PHP_VERSION."\n";
+    require __DIR__.'/../vendor/autoload.php';
+    $app = require __DIR__.'/../bootstrap/app.php';
+    try {
+        $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+        echo "BOOTSTRAP OK\n";
+    } catch (Throwable $e) {
+        echo 'ROOT: '.get_class($e).': '.$e->getMessage().' in '.$e->getFile().':'.$e->getLine()."\n";
+    }
+    exit;
+}
+
 try {
     require __DIR__.'/../public/index.php';
 } catch (Throwable $e) {
