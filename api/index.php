@@ -22,6 +22,12 @@ foreach ($storageDirectories as $directory) {
 $_ENV['LARAVEL_STORAGE_PATH'] = $storagePath;
 $_SERVER['LARAVEL_STORAGE_PATH'] = $storagePath;
 
+// bootstrap/cache es de solo lectura en Vercel; los manifiestos se generan en /tmp.
+foreach (['APP_PACKAGES_CACHE' => 'packages.php', 'APP_SERVICES_CACHE' => 'services.php'] as $name => $file) {
+    $_ENV[$name] = $_SERVER[$name] = $storagePath.'/'.$file;
+    putenv($name.'='.$storagePath.'/'.$file);
+}
+
 $report = static function (string $message): void {
     error_log($message);
 
