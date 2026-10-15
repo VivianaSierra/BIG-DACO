@@ -30,11 +30,6 @@ foreach (['APP_PACKAGES_CACHE' => 'packages.php', 'APP_SERVICES_CACHE' => 'servi
 
 $report = static function (string $message): void {
     error_log($message);
-
-    if (isset($_GET['diag'])) {
-        header('Content-Type: text/plain; charset=UTF-8');
-        echo $message;
-    }
 };
 
 register_shutdown_function(static function () use ($report): void {
@@ -45,45 +40,6 @@ register_shutdown_function(static function () use ($report): void {
         $report('PHP FATAL: '.$error['message'].' in '.$error['file'].':'.$error['line']);
     }
 });
-
-if (isset($_GET['diag'])) {
-    header('Content-Type: text/plain; charset=UTF-8');
-    foreach (['APP_KEY', 'APP_ENV', 'DB_CONNECTION', 'DB_HOST', 'DB_USERNAME', 'DB_PASSWORD', 'DB_DATABASE', 'SESSION_DRIVER'] as $name) {
-        echo $name.': '.(getenv($name) === false || getenv($name) === '' ? 'MISSING' : 'set')."\n";
-    }
-    echo 'APP_KEY length: '.strlen((string) getenv('APP_KEY'))."\n";
-    echo 'PHP: '.PHP_VERSION."\n";
-    require __DIR__.'/../vendor/autoload.php';
-    $app = require __DIR__.'/../bootstrap/app.php';
-    try {
-        $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
-        echo "BOOTSTRAP OK\n";
-        if ($_GET['diag'] === 'migrate') {
-            $code = Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
-            echo "EXIT: $code\n".Illuminate\Support\Facades\Artisan::output();
-            exit;
-        }
-        if ($_GET['diag'] === 'req') {
-            $kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
-            $response = $kernel->handle(Illuminate\Http\Request::create($_GET['path'] ?? '/login'));
-            echo 'STATUS: '.$response->getStatusCode()."\n";
-            $ex = $response->exception ?? null;
-            if ($ex) {
-                echo 'EXC: '.get_class($ex).': '.substr($ex->getMessage(), 0, 500).' in '.$ex->getFile().':'.$ex->getLine()."\n";
-            }
-            exit;
-        }
-        try {
-            $app->make('db')->connection()->getPdo();
-            echo "DB OK\n";
-        } catch (Throwable $e) {
-            echo 'DB: '.get_class($e).': '.substr($e->getMessage(), 0, 300)."\n";
-        }
-    } catch (Throwable $e) {
-        echo 'ROOT: '.get_class($e).': '.$e->getMessage().' in '.$e->getFile().':'.$e->getLine()."\n";
-    }
-    exit;
-}
 
 try {
     require __DIR__.'/../public/index.php';
